@@ -22,11 +22,11 @@ Write a python program to complete the model calculation, including working out 
 Identify the correlation between win/loss and the model output of a team, using statistics.
 
 
-<Scope>
+< Scope >
  
 Obtain the most-win team type classified by performance variance.
  
-<Timeframe>
+< Timeframe >
  
 Phase One: Model design (9/26 - 10/3)
 
