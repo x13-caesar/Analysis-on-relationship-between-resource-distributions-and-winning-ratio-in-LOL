@@ -15,7 +15,7 @@ def next():
     print("")
 
 ## 导入 raw data
-df = pd.DataFrame(pd.read_csv('stats1.csv',header=0))
+df = pd.DataFrame(pd.read_csv('stats_10000.csv',header=0))
 
 ## 看一下 raw data 的信息
 df.info()
