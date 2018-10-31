@@ -21,7 +21,8 @@ df = pd.DataFrame(pd.read_csv('stats_10000.csv',header=0))
 df.info()
 next()
 
-##combine KDA 
+##combine KDA
+
 
 ## 按队伍分组，计算队伍方差 calculate the variance of each team.
 df_team = df.groupby(['match','win']) #categorize df
