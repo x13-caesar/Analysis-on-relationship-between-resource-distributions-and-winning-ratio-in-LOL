@@ -1,5 +1,6 @@
 # Analysis-on-relationship-between-resource-distributions-and-winning-ratio-in-LOL
 Group project for CISC 5830
+a ez project
 
 # Project Proposal, Updated on Sep 26. 2018
 
