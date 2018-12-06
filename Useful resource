@@ -1,11 +1,8 @@
-1.<<如何高效利用GitHub>>: 
-  https://www.yangzhiping.com/tech/github.html#q2
+1.Data Resource: 
 
-2.<<在Github和Git上fork之简单指南>>:
-  https://linux.cn/article-4292-1.html
-  
-3.sklearn官方文档：
+
+2.sklearn offical documentation：
   http://scikit-learn.org/dev/user_guide.html
   
-4.pandas分组统计函数 groupby、pivot_table及crosstab:
-  https://blog.csdn.net/elecjack/article/details/50760736
+3.Pandas offical documentation:
+  http://pandas.pydata.org/pandas-docs/stable/
