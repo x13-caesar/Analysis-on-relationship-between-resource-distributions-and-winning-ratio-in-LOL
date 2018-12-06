@@ -1,55 +1,132 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Dec  4 20:28:11 2018
+
+@author: qiangwenxu
+"""
+
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 
-'''
-我们的因变量y其实是个(0/1) true or false 的值，
-不能用线性回归或者ridge之类的变体，
-否则预测结果出来个 0.2238，我们也不知道咋办……
-看了下，只能用 logistic regression，
-'''
 
-## 读数据
-df_var = pd.DataFrame(pd.read_csv('rank_var_test.csv',header=0))
+## 设一个分隔线的function，方便阅读结果
+def line():
+    print("")
+    print("----------")
+    print("")
 
-## 定义 X 和 y
-X = df_var.iloc[:2000, 1:(df_var.shape[0])]
-y = df_var.win
+## 优化数据
+def GetKDA(df):
+    # 把 deaths 项的 0 都变成 1
+    df['deaths_p']=df['deaths'] 
+    for i in range(df.shape[0]):
+        if df.at[i, 'deaths'] == 0:
+            df.set_value(i, 'deaths_p', 1)
 
-## 定义 logistic regression model
-# random_state 是个随机种子，不用管，写什么都行
-# solver是用来选择优化算法
-# multi_class用来定义多类，“one v.s. rest” - ovr
-clf = LogisticRegression(random_state=0, solver='liblinear',
-                         multi_class='ovr').fit(X, y)
+    # 计算 KDA
+    df['KDA'] = (df['kills']+df['assists'])/df['deaths_p']
+    return df
 
-## 看一下根据测试数据出来的准确度评分，0.8以上算能用了
-print("regression model score: ", clf.score(X, y))
-print("")
-## 扔几个样本数据进去测一下，然后发现模型特别蠢 so bad
-print("predict of first 10: ", clf.predict(X[:10]))
-print("")
-print("predict confidence scores for beginning 10: \n", 
-      clf.decision_function(X[:10]))
+## 得到建模需要的特征数据
+def GetFactor(df, unwanted):
+    # 筛选自变量
+    df = df.drop(unwanted, axis=1)
+    ## 按队伍分组，计算队伍方差 calculate the variance of each team.
+    df_team = df.groupby(['match','win']) #categorize df
+    df_var = df_team.agg('var').reset_index()
+    # match和id用完了，也拿掉
+    df_var = df_var.drop(['match',
+                          'id'], axis=1)
+    # 删掉 NaN的行
+    df_var = df_var.dropna()
+    return(df_var)
 
-'''
+## 以 logistic Regression 进行建模
+def GetModel(df_var):
+    # 获得 Y
+    Y = df_var['win'].values
+    # 预测数据
+    df_var = df_var.drop(['win'], axis=1)
+    X = df_var.values
+    # 将训练数据进行分割以便于进行交叉验证
+    X_train, X_test, Y_train, Y_test = train_test_split(X, 
+                                                        Y, 
+                                                        test_size = 0.3, 
+                                                        random_state = 21)
+    # 初始化logistics模型
+    LRCls = LogisticRegression(penalty="l1")
+    # 训练logistics模型
+    LRCls.fit(X_train, Y_train.ravel())
+    # 测试logistics模型
+    model_score = LRCls.score(X_test, Y_test.ravel())
+    print('The accuracy of the Logistic Regression model is', model_score)
+    return LRCls
 
-付从大神那儿拿来的代码，用的是 RidgeCV，
-本质上是个自带“留一法”交叉验证的 岭回归 ridge regression，
-我们研究的问题并不适用，
-先把原本code扔这儿供参考。
+def GetImportance(LRCls, factors):
+    imp = LRCls.coef_[0].tolist()
+    imp_dic = dict(zip(factors, imp))
+    return imp_dic
 
-def train_model(train_df, test_df):  #输入 train 和 test
-    reg_target = train_df['y']
-    del train_df['x']
-    reg_data = train_df
-    rcv = RidgeCV()
-    rcv.fit(reg_data, reg_target)
-    data1t_y = test_df['x']
-    del test_df['x']
-    data1t_x = test_df
-    y_pred = rcv.predict(X=data1t_x)
-    mse = mean_squared_error(data1t_y, y_pred)
-    return rcv.alpha_, mse #输出 lambda 和 error
-
-'''
+## 以下为使用真实数据进行分析的代码过程
     
+## 确认样本数据
+fileName = 'stats2.csv'
+
+## 导入 raw data
+df = pd.DataFrame(pd.read_csv(fileName, header=0))
+
+df = GetKDA(df)
+
+unwanted = ['item1',
+             'item2',
+             'item3',
+             'item4',
+             'item5',
+             'item6',
+             'trinket',
+             'kills',
+             'assists',
+             'deaths',
+             'deaths_p',
+             'largestkillingspree',
+             'largestmultikill',
+             'killingsprees',
+             'longesttimespentliving',
+             'doublekills',
+             'triplekills',
+             'quadrakills',
+             'pentakills',
+             'legendarykills',
+             'magicdmgdealt',
+             'physicaldmgdealt',
+             'truedmgdealt',
+             'largestcrit',
+             'magicdmgtochamp', 
+             'physdmgtaken',
+             'truedmgtaken',
+             'goldspent',
+             'turretkills',
+             'inhibkills',
+             'neutralminionskilled',
+             'ownjunglekills',
+             'enemyjunglekills',
+             'champlvl',
+             'timecc',
+             'pinksbought',
+             'wardsbought',
+             'wardskilled',
+             'firstblood']
+
+
+df_var = GetFactor(df, unwanted)
+
+LRCls = GetModel(df_var)
+
+factors = df_var.columns.tolist()[1:]
+importance = GetImportance(LRCls, factors)
+
+print('The coefficient of factors:')
+for key,value in importance.items():
+    print('{key}:{value}'.format(key = key, value = value))
